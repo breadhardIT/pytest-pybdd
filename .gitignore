@@ -6,3 +6,4 @@ report/
 htmlcov/
 .pytest-cache/
 .coverage
+.idea
