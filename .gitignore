@@ -7,3 +7,4 @@ htmlcov/
 .pytest-cache/
 .coverage
 .i
+build/
