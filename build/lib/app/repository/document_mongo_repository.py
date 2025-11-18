@@ -9,8 +9,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from app.models.document import Document, DocumentCreate
 
 LOG = logging.getLogger(__name__)
-
-
 class DocumentMongoRepository:
     """
     A repository for accessing Documents collection
@@ -18,9 +16,8 @@ class DocumentMongoRepository:
         client (AsyncIOMotorClient): Motor MongoDB client
         db_name (str): The Database name
     """
-
     def __init__(self, client: AsyncIOMotorClient, db_name: str = "tdd_workshop"):
-        self.client: AsyncIOMotorClient = client
+        self.client : AsyncIOMotorClient = client
         self.db_name = client[db_name]
         self.collection = self.db_name["documents"]
 
@@ -63,13 +60,8 @@ class DocumentMongoRepository:
         """
         LOG.debug(f"Create document {document_create}")
         url = quote(Path(document_create.title).name, safe="")
-        document: Document = Document(
-            id="",
-            title=document_create.title,
-            description=document_create.description,
-            key=url,
-            file_path=None,
-        )
+        document : Document= Document(id="", title=document_create.title, description=document_create.description,
+                                      key=url,file_path=None)
         data = document.model_dump(exclude={"id"})
         result = await self.collection.insert_one(data)
         document.id = str(result.inserted_id)
@@ -85,3 +77,4 @@ class DocumentMongoRepository:
         """
         result = await self.collection.delete_one({"_id": doc_id})
         return result.deleted_count > 0
+

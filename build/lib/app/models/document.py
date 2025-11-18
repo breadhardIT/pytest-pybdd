@@ -13,7 +13,6 @@ class Document(BaseModel):
         key (str): The unique file name where the file resides
         file_path (str): The URL where the document can be accessed
     """
-
     id: str
     title: str
     description: str

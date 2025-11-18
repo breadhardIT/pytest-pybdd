@@ -14,14 +14,15 @@ from app.repository.document_s3_repository import S3Repository
 
 logging.basicConfig(
     level=logging.INFO,  # mostrar INFO y superiores
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def docker_infra():
     """
-        Prepares docker infrastructure for tests
+    Prepares docker infrastructure for tests
     """
     subprocess.run(["docker", "compose", "up", "-d"], check=True)
     time.sleep(3)
@@ -57,8 +58,12 @@ def s3_repo() -> S3Repository:
     Returns:
         S3Repository: The S3 repository for Document model
     """
-    repository: S3Repository = S3Repository(endpoint_url=settings.s3_endpoint_url, access_key=settings.s3_access_key,
-                                            secret_key=settings.s3_secret_key, bucket=settings.s3_bucket)
+    repository: S3Repository = S3Repository(
+        endpoint_url=settings.s3_endpoint_url,
+        access_key=settings.s3_access_key,
+        secret_key=settings.s3_secret_key,
+        bucket=settings.s3_bucket,
+    )
     try:
         repository.client.head_bucket(Bucket=settings.s3_bucket)
     except ClientError:

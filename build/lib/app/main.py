@@ -14,9 +14,9 @@ app = FastAPI(title="TDD Workshop API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # o ["*"] para permitir todos (no recomendado en prod)
+    allow_origins=origins,       # o ["*"] para permitir todos (no recomendado en prod)
     allow_credentials=True,
-    allow_methods=["*"],  # GET, POST, PUT, DELETE...
+    allow_methods=["*"],         # GET, POST, PUT, DELETE...
     allow_headers=["*"],
 )
 

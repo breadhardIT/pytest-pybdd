@@ -13,31 +13,28 @@ from app.repository.document_s3_repository import S3Repository
 LOG = logging.getLogger(__name__)
 router = APIRouter()
 
-
 def get_mongo_repo() -> DocumentMongoRepository:
-    client: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongodb_uri)
+    client = AsyncIOMotorClient(settings.mongodb_uri)
     return DocumentMongoRepository(client, db_name=settings.mongodb_db)
-
 
 def get_s3_repo() -> S3Repository:
     return S3Repository(
         endpoint_url=settings.s3_endpoint_url,
         access_key=settings.s3_access_key,
         secret_key=settings.s3_secret_key,
-        bucket=settings.s3_bucket,
+        bucket=settings.s3_bucket
     )
 
-
 def document_create_form(
-    title: str = Form(...), description: str = Form(...)
+    title: str = Form(...),
+    description: str = Form(...)
 ) -> DocumentCreate:
     return DocumentCreate(title=title, description=description)
 
-
 @router.get("/", response_model=List[Document])
 async def list_documents(
-    mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
-    s3_repo: S3Repository = Depends(get_s3_repo),
+        mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
+        s3_repo: S3Repository = Depends(get_s3_repo),
 ) -> List[Document]:
     """
     Get a List of Documents
@@ -54,13 +51,12 @@ async def list_documents(
         doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
     return docs
 
-
-@router.post("/", response_model=Document, status_code=HTTP_201_CREATED)
+@router.post("/", response_model=Document,status_code=HTTP_201_CREATED)
 async def post_document(
     metadata: DocumentCreate = Depends(document_create_form),
     file: UploadFile = File(...),
     mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
-    s3_repo: S3Repository = Depends(get_s3_repo),
+    s3_repo: S3Repository = Depends(get_s3_repo)
 ) -> Document:
     """
     Post a document
@@ -78,12 +74,11 @@ async def post_document(
     doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
     return doc
 
-
 @router.get("/{document_id}", response_model=Document)
 async def get_document(
     document_id: str,
     mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
-    s3_repo: S3Repository = Depends(get_s3_repo),
+    s3_repo: S3Repository = Depends(get_s3_repo)
 ) -> Document:
     """
     Get a document
@@ -101,12 +96,11 @@ async def get_document(
     doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
     return doc
 
-
-@router.delete("/{document_id}", status_code=HTTP_204_NO_CONTENT)
+@router.delete("/{document_id}",status_code=HTTP_204_NO_CONTENT)
 async def delete_document(
-    document_id: str,
-    mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
-    s3_repo: S3Repository = Depends(get_s3_repo),
+        document_id: str,
+        mongo_repo: DocumentMongoRepository = Depends(get_mongo_repo),
+        s3_repo: S3Repository = Depends(get_s3_repo)
 ):
     """
     Delete document
@@ -118,6 +112,6 @@ async def delete_document(
     LOG.debug(f"Delete document {document_id}")
     doc: Document = await mongo_repo.get_document(document_id)
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(status_code=404,detail="Document not found")
     s3_repo.delete_file(doc.key)
     await mongo_repo.delete_document(document_id)
