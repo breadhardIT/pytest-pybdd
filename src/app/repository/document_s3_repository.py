@@ -1,6 +1,9 @@
+import logging
+
 import boto3
 from botocore.client import BaseClient
-
+from botocore.exceptions import ClientError
+LOG = logging.getLogger(__name__)
 
 class S3Repository:
     """
@@ -35,25 +38,30 @@ class S3Repository:
             ExpiresIn=expiration,
         )
 
-    def generate_presigned_url_for_put(self, key: str, expiration: int = 3600) -> str:
-        """
-        Generates a presigned URL for being accessed from consumers
-        Args:
-            key (str): the object key (refers to path in S3 bucket)
-            expiration (int): The duration of the generated URL in seconds (3600 by default)
-        Returns:
-            url (str): The generated URL
-        """
-        return self.client.generate_presigned_url(
-            "put_object",
-            Params={"Bucket": self.bucket, "Key": key},
-            ExpiresIn=expiration,
-        )
-    async def upload_file(self,content: bytes, key: str):
+    def upload_file(self,content: bytes, key: str):
         """
         Upload a file to the bucket in the specified path
         Args:
             key (str): The key (file name and path)
             content: Content in bytes
         """
+        LOG.info(f"Saving file {key}")
         self.client.put_object(Bucket = self.bucket,Key = key,Body=content)
+
+    def file_exists(self,key: str) -> bool:
+        LOG.info(f"Getting file {key}")
+        try:
+            self.client.get_object(
+                Bucket=self.bucket,
+                Key=key
+            )
+            return True
+        except ClientError:
+            return False
+
+    def delete_file(self, key: str):
+        """
+        Delete the file specified in file_path
+        Args:
+            key (str): The path and file name of the file to delete
+        """

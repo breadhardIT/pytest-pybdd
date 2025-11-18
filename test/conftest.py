@@ -16,6 +16,7 @@ logging.basicConfig(
     level=logging.INFO,  # mostrar INFO y superiores
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 @pytest.fixture(scope="session", autouse=True)
 def docker_infra():

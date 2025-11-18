@@ -25,3 +25,17 @@ Feature: Document Management
     When I get an existing document
     Then response is 200
     And response is the expected document
+
+  Scenario: DELETE /documents/document with existing documents
+    Given API is running
+    And Database contains documents
+    When I delete a non existing document
+    Then response is 204
+    And document was deleted
+
+  Scenario: DELETE /documents/document with existing documents
+    Given API is running
+    And Database contains documents
+    When I delete a non existing document
+    Then response is 404
+    And document doesn't exist in bucket

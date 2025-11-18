@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -8,12 +10,14 @@ class Document(BaseModel):
         id (str): Unique document identifier
         title (str): Document title
         description (str): Document description
+        key (str): The unique file name where the file resides
         file_path (str): The URL where the document can be accessed
     """
     id: str
     title: str
     description: str
-    file_path: str
+    key: str
+    file_path: Optional[str]
 
 
 class DocumentCreate(BaseModel):

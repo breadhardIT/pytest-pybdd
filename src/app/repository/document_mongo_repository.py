@@ -40,9 +40,9 @@ class DocumentMongoRepository:
         Returns:
             document (Document | None): The document if found, null if not found
         """
-        LOG.info(f"Find by id: {doc_id}")
+        LOG.debug(f"Find by id: {doc_id}")
         doc = await self.collection.find_one({"_id": ObjectId(doc_id)})
-        LOG.info(f"Response: {doc}")
+        LOG.debug(f"Response: {doc}")
         if doc:
             doc["id"] = str(doc["_id"])
             return Document(**doc)
@@ -56,15 +56,13 @@ class DocumentMongoRepository:
         Returns:
             id (str): The unique document identifier
         """
-        LOG.info(f"Create document {document_create}")
+        LOG.debug(f"Create document {document_create}")
         url = quote(Path(document_create.title).name, safe="")
         document : Document= Document(id="", title=document_create.title, description=document_create.description,
-                                      file_path=url)
+                                      key=url,file_path=None)
         data = document.model_dump(exclude={"id"})
         result = await self.collection.insert_one(data)
-        LOG.info(f"Result of insert is: {result}")
         document.id = str(result.inserted_id)
-        LOG.info(f"Document inserted: {document}")
         return document
 
     async def delete_document(self, doc_id: str) -> bool:
