@@ -50,11 +50,11 @@ class S3Repository:
             key (str): The key (file name and path)
             content: Content in bytes
         """
-        LOG.info(f"Saving file {key}")
+        LOG.debug(f"Saving file {key}")
         self.client.put_object(Bucket=self.bucket, Key=key, Body=content)
 
     def file_exists(self, key: str) -> bool:
-        LOG.info(f"Getting file {key}")
+        LOG.debug(f"Getting file {key}")
         try:
             self.client.get_object(Bucket=self.bucket, Key=key)
             return True
