@@ -1,0 +1,55 @@
+[project]
+name = "tdd-workshop"
+version = "0.1.0"
+description = "Workshop de TDD con FastAPI, Pytest, PyBDD, Docker, MongoDB y MinIO"
+requires-python = "==3.13.*"
+
+dependencies = [
+    "fastapi==0.115.14",
+    "uvicorn[standard]==0.35.0",
+    "boto3==1.39.2",
+    "python-dotenv==0.13.0",
+    "motor==3.7.1",
+    "pydantic>=2.0,<3",
+    "python-multipart==0.0.20"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.1",
+    "pytest-bdd==8.1.0",
+    "httpx==0.28.1",
+    "pytest-cov==6.2.1",
+    "pytest-html==4.1.1",
+    "ruff==0.14.5",
+    "black==25.11.0",
+    "isort==7.0.0",
+    "mypy==1.18.2",
+]
+
+[tool.uv]
+dev-dependencies = ["tdd-workshop[dev]"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "I", "B"]
+ignore = ["E501","B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+strict = false
+

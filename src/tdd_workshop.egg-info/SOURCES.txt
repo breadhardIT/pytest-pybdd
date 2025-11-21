@@ -1,0 +1,17 @@
+LICENSE
+README.md
+pyproject.toml
+src/app/config.py
+src/app/main.py
+src/app/api/__init__.py
+src/app/api/documents.py
+src/app/models/__init__.py
+src/app/models/document.py
+src/app/repository/__init__.py
+src/app/repository/document_mongo_repository.py
+src/app/repository/document_s3_repository.py
+src/tdd_workshop.egg-info/PKG-INFO
+src/tdd_workshop.egg-info/SOURCES.txt
+src/tdd_workshop.egg-info/dependency_links.txt
+src/tdd_workshop.egg-info/requires.txt
+src/tdd_workshop.egg-info/top_level.txt
