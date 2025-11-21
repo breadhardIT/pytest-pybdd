@@ -1,11 +1,11 @@
 import logging
 
 from bson import ObjectId
-from factory.documents_factory import create_document_request_factory
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from app.models.document import Document
 from app.repository.document_s3_repository import S3Repository
+from factory.documents_factory import create_document_request_factory
 
 scenarios("../features/documents.feature")
 LOG = logging.getLogger(__name__)
@@ -20,6 +20,7 @@ def there_are_documents_in_database(client, context):
             "/documents",
             data=create_document_request_factory().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
+            headers={"Authorization": f'Bearer {context["token"]}'}
         )
         assert response.status_code == 201
         assert response.json()
@@ -29,14 +30,14 @@ def there_are_documents_in_database(client, context):
 
 
 @given("API is running")
-def api_running(client):
+def api_running(client,context):
     response = client.get("/docs")
     assert response.status_code == 200
 
 
 @when("I get all documents")
 def get_documents(client, context):
-    response = client.get("/documents")
+    response = client.get("/documents",headers={"Authorization": f'Bearer {context["token"]}'})
     context["response"] = response
 
 

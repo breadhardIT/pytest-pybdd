@@ -19,6 +19,7 @@ class Document(BaseModel):
     description: str
     key: str
     file_path: Optional[str]
+    owner_id: str
 
 
 class DocumentCreate(BaseModel):

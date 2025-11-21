@@ -1,11 +1,16 @@
+
 import logging
 import subprocess
 import time
+import uuid
+from datetime import datetime, timedelta
 
+import jwt
 import pytest
 from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
 from motor.motor_asyncio import AsyncIOMotorClient
+from pytest_bdd import given, parsers
 
 from app.config import settings
 from app.main import app
@@ -13,7 +18,7 @@ from app.repository.document_mongo_repository import DocumentMongoRepository
 from app.repository.document_s3_repository import S3Repository
 
 logging.basicConfig(
-    level=logging.INFO,  # mostrar INFO y superiores
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -90,3 +95,28 @@ def clean_db_and_s3(mongo_repo: DocumentMongoRepository, s3_repo: S3Repository):
 @pytest.fixture
 def context():
     return {}
+
+def create_test_token(user_id: str = "test-user") -> str:
+    payload = {
+        "sub": user_id,
+        "exp": datetime.now() + timedelta(hours=1)
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+
+
+@given(parsers.parse("a valid JWT token for user {user_id}"))
+def jwt_token_for_user(context, user_id: str):
+    """
+    Generates a valid token for specific username.
+    """
+    context["token"] = create_test_token(user_id=user_id)
+    context["user_id"] = user_id
+
+
+@given(parsers.parse("an invalid JWT token for user '{user_id}'"))
+def jwt_invalid_token_for_user(context, user_id: str):
+    """
+    Generates an invalid token for specific username.
+    """
+    context["token"] = uuid.uuid4()
+    context["user_id"] = user_id

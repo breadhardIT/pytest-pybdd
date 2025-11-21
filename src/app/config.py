@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     s3_access_key: str
     s3_secret_key: str
     s3_bucket: str
+    oauth2_authorization_url: str = "https://auth-server.example.com/auth/realms/myrealm/protocol/openid-connect/token"
+    jwt_secret: str = "example"
 
     model_config = {
         "env_file": ".env",
