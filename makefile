@@ -10,6 +10,7 @@ lint:
 
 PHONY: run/local
 run/local:
+	docker compose up -d
 	uv run uvicorn app.main:app --reload
 
 PHONY: test/all
