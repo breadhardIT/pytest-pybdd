@@ -4,9 +4,7 @@ from typing import List, Optional
 from urllib.parse import quote
 
 from bson import ObjectId
-from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
-from starlette.status import HTTP_403_FORBIDDEN
 
 from app.models.document import Document, DocumentCreate
 
@@ -26,20 +24,21 @@ class DocumentMongoRepository:
         self.db_name = client[db_name]
         self.collection = self.db_name["documents"]
 
-    async def list_documents(self,owner_id: str) -> List[Document]:
+    async def list_documents(self, owner_id: str) -> List[Document]:
         """
         Returns the whole list of documents
         Returns:
             documents (List[Document])
         """
-        cursor = self.collection.find({})
+        LOG.debug(f"Get documents for user {owner_id}")
+        cursor = self.collection.find({"owner_id": owner_id})
         docs = []
         async for doc in cursor:
             doc["id"] = str(doc["_id"])
             docs.append(Document(**doc))
         return docs
 
-    async def get_document(self, doc_id: str,owner_id: str) -> Optional[Document]:
+    async def get_document(self, doc_id: str, owner_id: str) -> Optional[Document]:
         """
         Get a single document by unique identifier
         Args:
@@ -50,15 +49,16 @@ class DocumentMongoRepository:
         LOG.debug(f"Find by id: {doc_id}")
         doc = await self.collection.find_one({"_id": ObjectId(doc_id)})
         LOG.debug(f"Response: {doc}")
-        if doc:
-            doc["id"] = str(doc["_id"])
-            if doc["owner_id"] == owner_id:
-              return Document(**doc)
-            else:
-              raise HTTPException(status_code=HTTP_403_FORBIDDEN,detail="Forbidden")
-        return None
+        doc["id"] = str(doc["_id"])
+        return Document(**doc)
 
-    async def create_document(self, document_create: DocumentCreate,current_user: str) -> Document:
+    #   if doc:
+    #            if doc["owner_id"] == owner_id:
+    #            else:
+    #              raise HTTPException(status_code=HTTP_403_FORBIDDEN,detail="Forbidden")
+    #        return None
+
+    async def create_document(self, document_create: DocumentCreate, current_user: str) -> Document:
         """
         Creates a new document
         Args:
@@ -74,13 +74,15 @@ class DocumentMongoRepository:
             description=document_create.description,
             key=url,
             file_path=None,
+            owner_id=current_user
         )
         data = document.model_dump(exclude={"id"})
+        LOG.debug(f"Inserting document: {document}")
         result = await self.collection.insert_one(data)
         document.id = str(result.inserted_id)
         return document
 
-    async def delete_document(self, doc_id: str,current_user: str) -> bool:
+    async def delete_document(self, doc_id: str, current_user: str) -> bool:
         """
         Delete the document with the provided identifier
         Args:

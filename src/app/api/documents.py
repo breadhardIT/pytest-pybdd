@@ -3,7 +3,6 @@ from typing import List
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
-from pygments.lexers import d
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from app.api.oauth2_provider import get_current_user
@@ -51,7 +50,7 @@ async def list_documents(
         documents (List[Document]): The whole list of existing documents
     """
     LOG.debug("Get the documents list")
-    docs = await mongo_repo.list_documents(current_user)
+    docs = await mongo_repo.list_documents(owner_id=current_user)
     LOG.debug(f"Document list has {len(docs)} elements")
     for doc in docs:
         doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
@@ -77,7 +76,7 @@ async def post_document(
         document (Document): The created document with a presigned url for downloading the file
     """
     content: bytes = await file.read()
-    doc = await mongo_repo.create_document(document_create=metadata,current_user=current_user)
+    doc = await mongo_repo.create_document(document_create=metadata, current_user=current_user)
     s3_repo.upload_file(content, doc.key)
     doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
     return doc
@@ -100,13 +99,11 @@ async def get_document(
         document (Document): The created document with a presigned url for downloading the file
     """
     LOG.debug(f"Get document {document_id}")
-    doc = await mongo_repo.get_document(doc_id=document_id,owner_id=current_user)
+    doc = await mongo_repo.get_document(doc_id=document_id, owner_id="")
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
     return doc
-
-
 
 
 @router.delete("/{document_id}", status_code=HTTP_204_NO_CONTENT)
@@ -124,8 +121,8 @@ async def delete_document(
         s3_repo(S3Repository): The S3 Bucket repository
     """
     LOG.debug(f"Delete document {document_id}")
-    doc: Document = await mongo_repo.get_document(doc_id=document_id,owner_id=current_user)
+    doc: Document = await mongo_repo.get_document(doc_id=document_id, owner_id="")
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     s3_repo.delete_file(doc.key)
-    await mongo_repo.delete_document(doc_id=document_id,current_user=current_user)
+    await mongo_repo.delete_document(doc_id=document_id, current_user="")
