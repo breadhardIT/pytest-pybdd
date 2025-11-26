@@ -1,11 +1,11 @@
 Feature: Document Management
 
-  Scenario: An unauthenticated can't create a document
+  Scenario: An unauthenticated user can't create a document
     Given API is running
     When I create a document
     Then response is 401
 
-  Scenario: An invalid token can't create a document
+  Scenario: A user with invalid token can't create a document
     Given API is running
     And an invalid JWT token for user John
     When I create a document
