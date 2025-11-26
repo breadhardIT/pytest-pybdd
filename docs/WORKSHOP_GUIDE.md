@@ -1,4 +1,12 @@
-# 1. Encuentra y resuelve el error
+# 1. Desarrollo del taller
+
+Introducción al TDD y breve explicación sobre Pytest y Pybdd. 
+
+Puesta en práctica con un desarrollo y una adaptación del código.
+
+Conclusiones y open-space para resolver dodas, y debatir sobre cómo abordar estrategias.
+
+# 2. Encuentra y resuelve el error
 
 Al ejecutar los tests con el siguiente comando
 
@@ -6,7 +14,7 @@ Al ejecutar los tests con el siguiente comando
 
 Puede observarse que falla un test. Ecuentra y resuelve el error.
 
-# 2. Añadimos autenticación y autorización.
+# 3. Ciclo del TDD -> Añadimos autenticación y autorización.
 
 Vamos a hacer una modificación en la API para añadir autenticación y autorización. Lo vamos a hacer de forma obvia.
 Sólo requeriremos que el usuario se haya logado en el sistema, y que por tanto las peticiones http nos lleguen con un bearer token válido. 
@@ -396,4 +404,14 @@ async def list_documents(
     return docs
 ```
 Una vez aplicada esta lógica, nuestros tests sí que funcionarán correctamente.
+
+## Resto de iteraciones
+
+El objetivo del taller no es el de finalizar la API, sino el de trabajar la dinámica TDD, e integrarla en pytest y pybdd
+
+Por lo que lo dejaríamos aquí, y avanzaremos otros conceptos
+
+## Mockear vs no mockear
+
+En general, en la medida de lo posible, lo ideal es mockear lo minimo, pero cuando es necesario, pytest nos da las opciones.
 
