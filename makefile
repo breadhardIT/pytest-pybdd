@@ -16,3 +16,4 @@ run/local:
 PHONY: test/all
 test/all:
 	uv run pytest -v --html=report.html --cov=app --cov-report=html --cov-report=term-missing -o log_cli=true -o log_cli_level=INFO
+

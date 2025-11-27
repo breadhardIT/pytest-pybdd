@@ -1,7 +1,7 @@
 import logging
 
 from bson import ObjectId
-from factory.documents_factory import create_document_request_factory
+from factory.documents_mother import create_document_request
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from app.models.document import Document
@@ -18,7 +18,7 @@ def there_are_documents_in_database(client, context):
     for _ in range(10):
         response = client.post(
             "/documents",
-            data=create_document_request_factory().model_dump(),
+            data=create_document_request().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
         )
         assert response.status_code == 201

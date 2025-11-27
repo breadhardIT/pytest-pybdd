@@ -76,9 +76,9 @@ def kafka_cluster():
 ```
 Regla práctica:
 
-unit tests → function
-integration tests → module
-infra / e2e → session
+- unit tests → function
+- integration tests → module
+- infra / e2e → session
 
 ### 2.3 Fixtures parametrizados
 
@@ -115,7 +115,6 @@ También se puede combinar con fixtures:
 ```
 @pytest.mark.parametrize("status", [200, 404, 500])
 def test_api_responses(api_client, status):
-    ...
 ```
 ## 4. 🎭 Mocking y Monkeypatching
 ### 4.1 Mock con unittest.mock
@@ -162,7 +161,7 @@ Genera un informe navegable con colores que resalta líneas cubiertas y no cubie
 Buenas prácticas de coverage:
 
 - No obsesionarse con 100%: cubrir casos de uso, no líneas
-- Priorizar paths críticos, errores, edge cases
+- Priorizar paths críticos, errores, casos borde
 
 Tests de integración suben calidad aunque bajen coverage local
 
@@ -171,18 +170,6 @@ Tests de integración suben calidad aunque bajen coverage local
 > pytest --junitxml=report.xml
 
 Integración con GitLab CI, Jenkins o GitHub Actions.
-
-### 6.2 Allure Reports
-> pytest --alluredir=allure-results
-> allure serve allure-results
-
-Permite:
-
-- dashboards
-- gráficas de tiempos
-- screenshots
-- logs enriquecidos
-- pasos (steps) tipo BDD
 
 ### 7. 🔁 Steps reutilizables
 
