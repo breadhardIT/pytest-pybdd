@@ -413,6 +413,8 @@ Por lo que lo dejaríamos aquí, y avanzaremos otros conceptos
 
 ## Cobertura
 
+
+
 ## Mockear vs no mockear
 
 En general, en la medida de lo posible, lo ideal es mockear lo minimo, pero cuando es necesario, pytest nos da las opciones.
