@@ -71,7 +71,7 @@ def s3_repo() -> S3Repository:
     return repository
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True,scope="function")
 def clean_db_and_s3(mongo_repo: DocumentMongoRepository, s3_repo: S3Repository):
     """
     Drop application database for cleaning data between tests
@@ -84,7 +84,7 @@ def clean_db_and_s3(mongo_repo: DocumentMongoRepository, s3_repo: S3Repository):
     if "Contents" in objects:
         for obj in objects["Contents"]:
             s3_repo.client.delete_object(Bucket=s3_repo.bucket, Key=obj["Key"])
-    yield
+
 
 
 @pytest.fixture
