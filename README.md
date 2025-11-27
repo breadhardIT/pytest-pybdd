@@ -2,6 +2,14 @@
 
 API de documentos construida con **FastAPI**, **MongoDB**, y **S3**, para gestión de documentos con metadata y archivos. Pensada para ser usada en un taller práctico.
 
+La documentación para el taller se encuentra en:
+
+1. [Breve introducción al TDD i BDD](docs/TDD_INTRODUCTION.md)
+2. [Introducción a Pytest y BDD](docs/PYTEST_BDD_INTRODUCTION.md)
+3. [Guía del taller](docs/WORKSHOP_GUIDE.md)
+
+Antes de iniciar el taller, seguir las instrucciones descritas a continuación, y leer la documentación sobre el funcionamiento de la API
+
 ---
 
 ## 🚀 Requisitos y dependencias
@@ -23,11 +31,15 @@ pip install uv
 - MinIO/S3: almacena archivos.
 - Levantar los servicios con Docker Compose:
 
-```docker compose up -d```
+```bash
+docker compose up -d
+```
 
 ## ▶️ Ejecutar la API en local
 
-```make run/local```
+```bash
+make run/local
+```
 
 Esto arranca FastAPI en: http://localhost:8000/docs desde donde puedes probar la API usando Swagger.  
 
@@ -41,17 +53,17 @@ Esto arranca FastAPI en: http://localhost:8000/docs desde donde puedes probar la
 ### Modelos
 
 - Document:
-```
-id: str
-title: str
-description: str
-key: str
-file_path: Optional[str]
+```python
+    id: str
+    title: str
+    description: str
+    key: str
+    file_path: Optional[str]
 ```
 - DocumentCreate:
-```
-title: str
-description: str
+```python
+    title: str
+    description: str
 ```
 ## 🧵 Endpoints
 ### GET /documents/

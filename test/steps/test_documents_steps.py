@@ -7,7 +7,7 @@ from pytest_bdd import given, parsers, scenarios, then, when
 from app.models.document import Document
 from app.repository.document_s3_repository import S3Repository
 from conftest import jwt_token_for_user, create_test_token, get_auth_headers
-from factory.documents_factory import create_document_request_factory
+from factory.documents_mother import create_document_request
 
 scenarios("../features/documents.feature")
 LOG = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def there_are_documents_in_database(client, context):
     for _ in range(10):
         response = client.post(
             "/documents",
-            data=create_document_request_factory().model_dump(),
+            data=create_document_request().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
             headers=get_auth_headers(context=context)
         )
@@ -43,7 +43,7 @@ def documents_owned_by(datatable, client, context):
             token = create_test_token(user_id=user_id)
             response = client.post(
                 "/documents",
-                data=create_document_request_factory().model_dump(),
+                data=create_document_request().model_dump(),
                 files={"file": ("file_name.txt", b"Document content", "text/plain")},
                 headers={"Authorization": f"Bearer {token}"}
             )
@@ -54,7 +54,7 @@ def documents_owned_by(datatable, client, context):
 
 @given("a document create request")
 def document_create_request(context):
-    context["document"] = create_document_request_factory()
+    context["document"] = create_document_request()
 
 @given("API is running")
 def api_running(client,context):
@@ -95,7 +95,7 @@ def get_existing_document(client, context):
 def post_document(client,context):
     response = client.post(
         "/documents",
-        data=create_document_request_factory().model_dump(),
+        data=create_document_request().model_dump(),
         files={"file": ("file_name.txt", b"Document content", "text/plain")},
         headers=get_auth_headers(context=context)
     )

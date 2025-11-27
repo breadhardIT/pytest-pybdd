@@ -8,3 +8,11 @@ htmlcov/
 .coverage
 .i
 build/
+mutants/
+allure/
+converage.xml
+src/tdd_workshop.egg-info
+__pycache__/
+**/__pycache__/
+*.pyc
+report.html

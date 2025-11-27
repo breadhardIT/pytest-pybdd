@@ -54,3 +54,20 @@ python_version = "3.10"
 ignore_missing_imports = true
 strict = false
 
+[tool.coverage.run]
+branch = true
+source = ["app"]     # tu código fuente
+omit = [
+    "*/__init__.py",
+    "test/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
