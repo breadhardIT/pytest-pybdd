@@ -11,3 +11,4 @@ build/
 mutants/
 allure/
 converage.xml
+src/tdd_workshop.egg-info
