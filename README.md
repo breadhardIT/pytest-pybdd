@@ -31,11 +31,15 @@ pip install uv
 - MinIO/S3: almacena archivos.
 - Levantar los servicios con Docker Compose:
 
-```docker compose up -d```
+```bash
+docker compose up -d
+```
 
 ## ▶️ Ejecutar la API en local
 
-```make run/local```
+```bash
+make run/local
+```
 
 Esto arranca FastAPI en: http://localhost:8000/docs desde donde puedes probar la API usando Swagger.  
 
@@ -49,17 +53,17 @@ Esto arranca FastAPI en: http://localhost:8000/docs desde donde puedes probar la
 ### Modelos
 
 - Document:
-```
-id: str
-title: str
-description: str
-key: str
-file_path: Optional[str]
+```python
+    id: str
+    title: str
+    description: str
+    key: str
+    file_path: Optional[str]
 ```
 - DocumentCreate:
-```
-title: str
-description: str
+```python
+    title: str
+    description: str
 ```
 ## 🧵 Endpoints
 ### GET /documents/

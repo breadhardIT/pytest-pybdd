@@ -44,13 +44,13 @@ Un fixture es:
 - se inyecta por nombre
 
 Ejemplo sencillo:
-```
+```python
 @pytest.fixture
 def sample_data():
     return {"id": 1, "name": "Javi"}
 ```
 Uso:
-```
+```python
 def test_data(sample_data):
     assert sample_data["id"] == 1
 ```
@@ -69,7 +69,7 @@ Los scopes controlan cada cuánto se instancia el fixture:
 | package  | una vez por paquete           | entornos pesados                   |      
 | session  | una vez por toda la ejecución | levantar docker-compose, clusters… |
 
-```
+```python
 @pytest.fixture(scope="session")
 def kafka_cluster():
     return start_fake_kafka()
@@ -83,7 +83,7 @@ Regla práctica:
 ### 2.3 Fixtures parametrizados
 
 Puedes generar múltiples variantes de un fixture:
-```
+```python
 @pytest.fixture(params=["sqlite", "mysql", "postgres"])
 def db_engine(request):
     return setup_db_for(request.param)
@@ -93,7 +93,7 @@ Esto ejecutará los tests 3 veces, una por cada motor.
 ## 3. 🧪 Parametrize — Testear variantes sin repetir código
 
 parametrize permite ejecutar un mismo test con distintas entradas y salidas esperadas.
-```
+```python
 @pytest.mark.parametrize(
     "input,expected",
     [
@@ -112,7 +112,7 @@ Usos típicos:
 - cubrir matrices de combinaciones (e.g. roles x permisos)
 
 También se puede combinar con fixtures:
-```
+```python
 @pytest.mark.parametrize("status", [200, 404, 500])
 def test_api_responses(api_client, status):
 ```
@@ -120,20 +120,20 @@ def test_api_responses(api_client, status):
 ### 4.1 Mock con unittest.mock
 Parcheo temporal con patch (context manager)
 from unittest.mock import patch
-```
+```python
 def test_service():
     with patch("src.external.api_call", return_value={"ok": True}):
         assert my_service() == "success"
 ```
 Parcheo como decorador
-```
+```python
 @patch("src.external.api_call", return_value=42)
 def test_value(mock_call):
     assert my_func() == 42
 ```
 ### 4.2 Mocking estilo pytest: monkeypatch
 monkeypatch es un fixture built-in muy flexible.
-```
+```python
 def test_env(monkeypatch):
     monkeypatch.setenv("API_KEY", "fake")
 
@@ -176,14 +176,14 @@ Integración con GitLab CI, Jenkins o GitHub Actions.
 En testing, sobre todo en BDD o test funcional, aparecen acciones repetidas. Pytest permite estructurarlas de varias formas.
 
 ## 7.1 Steps como funciones helper
-```
+```python
 def create_user_and_login(client):
     user = client.create(...)
     token = client.login(...)
     return token
 ```
 ## 7.2 Steps via fixtures (pattern recomendado)
-```
+```python
 @pytest.fixture
 def step_create_user(db):
     def run(name):
@@ -191,7 +191,7 @@ def step_create_user(db):
     return run
 ```
 Uso:
-```
+```python
 def test_user(step_create_user):
     user = step_create_user("pepe")
     assert user.name == "pepe"
@@ -199,7 +199,7 @@ def test_user(step_create_user):
 ## 7.3 Steps reutilizables en BDD
 
 Con pybdd:
-```
+```python
 @step("a valid user exists")
 def create_user(context):
     context.user = UserMother.valid()
@@ -209,7 +209,7 @@ def create_user(context):
 El patrón Object Mother es una fábrica de objetos orientada a tests que permite generar entidades consistentes, completas y expresivas.
 
 Ejemplo:
-```
+```python
 class DocumentMother:
     @staticmethod
     def random():
@@ -236,7 +236,7 @@ Ventajas:
 
 # 9. 🧩 Inyección de contexto: repositorios, servicios, API clients
 ## 9.1 Via fixtures (más limpio)
-```
+```python
 @pytest.fixture
 def repo():
     return InMemoryDocumentRepository()
@@ -248,7 +248,7 @@ def service(repo):
 Pytest resuelve dependencias automáticamente.
 
 ## 9.2 Via monkeypatch (cuando quieres reemplazar implementaciones)
-```
+```python
 def test_api(monkeypatch, client):
     monkeypatch.setattr(
         "src.services.repo",
@@ -256,7 +256,7 @@ def test_api(monkeypatch, client):
     )
 ```
 ## 9.3 Via factory fixtures (cuando necesitas configuraciones)
-```
+```python
 @pytest.fixture
 def service_factory():
     def build(url="http://mock"):
@@ -264,7 +264,7 @@ def service_factory():
     return build
 ```
 Uso:
-```
+```python
 def test_api(service_factory):
     svc = service_factory(url="http://test")
 ```
@@ -282,7 +282,7 @@ PyBDD permite escribir escenarios estilo Given / When / Then integrados con pyte
 |@scenario|enlaza un archivo Gherkin con su definición Python|
 
 Ejemplo:
-```
+```gherkin
 Feature: Document retrieval
 
   Scenario: Fetch existing document
@@ -291,7 +291,7 @@ Feature: Document retrieval
     Then I receive the document
 ```
 Código Python:
-```
+```python
 @given("a document exists")
 def _(context):
     context.doc = DocumentMother.random()

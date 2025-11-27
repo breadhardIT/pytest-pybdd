@@ -78,7 +78,7 @@ Ventajas:
 
 Ejemplos:
 
-```
+```gherkin
 Feature: As a manager I wan't to view one of my customer's file
   Scenario: A manager can view their customer's file
     Given the authenticated manager user John
