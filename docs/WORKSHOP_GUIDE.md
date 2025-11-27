@@ -8,7 +8,11 @@ Conclusiones y open-space para resolver dodas, y debatir sobre cómo abordar est
 
 # 2. Descripción del proyecto y batería de test
 
-## Configuración general
+## Cómo están estructurados los tests?
+
+### Configuración general
+
+Definida en el conftest. Aquí irán los fixtures de uso general, y los steps compartidos por diferentes features
 
 Por cada sesión de test levantar infraestructura (MongoDB y S3)
 
@@ -51,7 +55,7 @@ def clean_db_and_s3(mongo_repo: DocumentMongoRepository, s3_repo: S3Repository):
         for obj in objects["Contents"]:
             s3_repo.client.delete_object(Bucket=s3_repo.bucket, Key=obj["Key"])
 ```
-Definición de los steps y escenarios
+### Definición de los steps y escenarios
 
 Ejemplo:
 
@@ -63,11 +67,8 @@ def api_running(client):
     assert response.status_code == 200
 ```
 
-```python
-@given("API is running")
-def api_running(client):
-    response = client.get("/docs")
-    assert response.status_code == 200
+```gherkin
+    Given API is running
 ```
 
 # 3. Encuentra y resuelve el error
@@ -76,7 +77,7 @@ Al ejecutar los tests con el siguiente comando
 
 > make test/all
 
-Puede observarse que falla un test. Ecuentra y resuelve el error.
+Puede observarse que falla un test. Encuentra y resuelve el error.
 
 # 4. Ciclo del TDD -> Añadimos autenticación y autorización.
 
@@ -89,32 +90,39 @@ Nuestro equipo funcional ha definido una serie de casos de uso, y sus criterios 
 Casos de uso:
 
   - Como usuario quiero crear un documento:
-    - Escenario: Alta de un documento
+    - Escenario: Un usuario válido puede dar de alta un documento
       - Dado un usuario válido
       - Cuando inserto un documento
       - Entonces se crea correctamente
       - Y yo puedo consultarlo
       - Y otros usuario no puede consultarlo
   - Como usuario quiero consultar todos mis documentos
-    - Escenario: Como usuario quiero consultar todos mis documentos
+    - Escenario: Un usuario válido puede consultar sus documentos
       - Dado un usuario válido
       - Y existen documentos de diferentes usuarios
       - Cuando consulto todos los documentos
       - Enconces recupero una lista de documento
       - Y la lista sólo contiene mis documentos
-    - Escenario: Como usuario quiero consultar un documento ajeno
+  - Como usuario quiero consultar un documento
+    - Escenario: Un usuario válido puede consultar un documento propio existente
+      - Dado un usuario válido
+      - Y existen un documento suyo
+      - Cuando consulta su documento
+      - Entonces recupera el documento
+      - Y el documento es el esperado
+    - Escenario: Un usuario válido no puede consultar un documento ajeno existente
       - Dado un usuario válido
       - Y existe al menos un documento ajeno
       - Cuando consulto el documento
       - Entonces la respuesta es 403
   - Como usuario quiero borrar un documento
-    - Escenario: Como usuario quiero borrar mi documento
+    - Escenario: Un usuario válido puede borrar un documento propio existente
       - Dado un usuario valido
       - Y un documento existente
       - Cuando borro el documento
       - Este es borrado
       - Y no existe en el bucket
-    - Escenario: Como usuario quiero borrar un documento ajeno
+    - Escenario: Un usuario válido no puede borrar un documento ajeno existnete
       - Dado un usuario valido
       - Y un documento existente de otro usuario
       - Cuando borro el documento
@@ -229,7 +237,7 @@ Scenario: An unauthenticated requests causes 401
     Then response is 401
 ```
 
-Si comprovamos el resultado, efectivamente vamos a tener un error, puesto que no hemos modificado la API para incluir la autenticación. 
+Si comprobamos el resultado, efectivamente vamos a tener un error, puesto que no hemos modificado la API para incluir la autenticación. 
 
 ```
 FAILED test/steps/test_documents_steps.py::test_an_unauthenticated_requests_causes_401 - assert 200 == 401
@@ -477,9 +485,13 @@ Por lo que lo dejaríamos aquí, y avanzaremos otros conceptos
 
 ## Cobertura
 
-
+Vamos a ver un repaso a la cobertura realizada en estos tests, y repasar lo que hablamos al principio:
+- No obsesionarse con el porcentaje
+- Buscar cubrir comportamiento en lugar de líneas
+- Intentar cubrir todas las ramas del código
 
 ## Mockear vs no mockear
 
 En general, en la medida de lo posible, lo ideal es mockear lo minimo, pero cuando es necesario, pytest nos da las opciones.
+
 
