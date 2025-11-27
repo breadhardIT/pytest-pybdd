@@ -1,4 +1,4 @@
-Feature: Document Management
+Feature: As user I wan't to manage documents
 
   Scenario: A user gets an empty list when there are no documents
     Given API is running
