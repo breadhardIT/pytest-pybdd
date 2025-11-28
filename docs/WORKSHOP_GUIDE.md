@@ -178,7 +178,7 @@ De esta forma podemos definir los escenarios con la inyección de un usuario.
 ```gherkin
   Scenario: GET /documents/document with existing documents
     Given API is running
-    And invalid JWT token for user John
+    And an invalid JWT token for user John
     And Database contains documents
     When I get an existing document
     Then response is 200
@@ -556,7 +556,7 @@ Primero añadimos la depdendencia de requests al proyecto:
 ```
 Y creamos el repository
 ```python
-class UserRepository:
+class UsersRestRepository:
     """
     A repository for accessing enrolled users
     Args:
@@ -587,6 +587,29 @@ class UserRepository:
             return False
 
         raise HTTPException(status_code=500,detail="Internal server error")
+```
+Después modificaremos el oauth2_provider para incluir la validación
+```
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+import jwt
+from app.config import settings
+from app.repository.users_repository import UsersRestRepository
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")  # tokenUrl solo se usa si hay login
+
+def create_users_rest_repository():
+    return UsersRestRepository(base_url=settings.users_base_url)
+
+def get_current_user(token: str = Depends(oauth2_scheme),users_repository=Depends(create_users_rest_repository)) -> str:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        return user_id
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 ```
 Modificaremos el model settings para incluir el base url que inyectaremos:
 ```python
@@ -641,7 +664,7 @@ def client(mock_users_rest_repository):
     Returns:
         TestClient: A FastAPI API Rest Test client
     """
-    app.dependency_overrides[create_users_repository] = lambda: mock_users_rest_repository
+    app.dependency_overrides[create_users_rest_repository] = lambda: mock_users_rest_repository
     yield TestClient(app)
     app.dependency_overrides.clear()
 ```
@@ -707,16 +730,13 @@ Y ahora, siguiendo con la filosofía del TDD, crearemos el escenario que impide 
 ```
 Si ejecutamos los tests, este último va a fallar, ya que no codificamos la lógica. Procedemos a ello. 
 ```python
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")  # tokenUrl solo se usa si hay login
-users_rest_repository = UsersRestRepository(base_url=settings.users_base_url)
-
-def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
+def get_current_user(token: str = Depends(oauth2_scheme),users_repository=Depends(create_users_rest_repository)) -> str:
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-        if not users_rest_repository.exists(user_id):
+        if not users_repository.exists(user_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return user_id
     except jwt.PyJWTError:
