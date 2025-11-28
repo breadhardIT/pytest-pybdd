@@ -155,7 +155,7 @@ def jwt_token_for_user(context, user_id: str):
     context["user_id"] = user_id
 
 
-@given(parsers.parse("an invalid JWT token for user '{user_id}'"))
+@given(parsers.parse("an invalid JWT token for user {user_id}"))
 def jwt_invalid_token_for_user(context, user_id: str):
     """
     Generates an invalid token for specific username.
