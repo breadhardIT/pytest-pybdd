@@ -68,7 +68,3 @@ class S3Repository:
         Args:
             key (str): The path and file name of the file to delete
         """
-        try:
-            self.client.delete_object(Bucket=self.bucket,Key=key)
-        except ClientError:
-            raise HTTPException(status_code=500)

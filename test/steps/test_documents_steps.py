@@ -46,7 +46,7 @@ def get_non_existing_document(client, context):
     context["response"] = response
 
 
-@when("I delete a existing document")
+@when("I delete an existing document")
 def get_delete_existing_document(client, context):
     response = client.delete(f'/documents/{str(context["documents"][0].id)}')
     context["response"] = response
