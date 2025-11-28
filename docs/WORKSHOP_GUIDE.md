@@ -526,4 +526,210 @@ Vamos a ver un repaso a la cobertura realizada en estos tests, y repasar lo que 
 
 En general, en la medida de lo posible, lo ideal es mockear lo minimo, pero cuando es necesario, pytest nos da las opciones.
 
+# Bonus point
 
+Si hemos llegado hasta aquí en tiempo, vamos a explorar las opciones de mocking y stubbing. Vamos a empezar aplicando una nueva funcionalidad.
+
+Los usuarios, además de autenticados, deben existir en nuestra aplicación, para ello tenemos una API REST a la que llamaremos por usuario, y para ello nos definen los siguientes casos de uso, empezando por el alta de un documento:
+
+```gherkin
+    Scenario: An enrolled and authenticated user can create a document
+      Given: API is running
+      And: a valid JWT token for user John
+      And: John is an enrolled user
+      When: I create a document
+      Then: Then response is 201
+    Scenario: An non enrolled and authenticated user can create a document
+      Given: API is running
+      And: a valid JWT token for user John
+      And: John is not an enrolled user
+      When: I create a document
+      Then: Then response is 403
+```
+
+Para codificar la funcionalidad creamos un repositorio http:
+
+Primero añadimos la depdendencia de requests al proyecto:
+
+```toml
+    "requests==2.32.5"
+```
+Y creamos el repository
+```python
+class UserRepository:
+    """
+    A repository for accessing enrolled users
+    Args:
+        base_url(str): base url for endpoint
+        timeout(str): timeout limit, default 5.0 seconds
+    """
+    def __init__(self, base_url: str, timeout: float = 5.0):
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+
+    def exists(self, user_id: str) -> bool:
+        """
+        Validate if user is enrolled
+        Args:
+            user_id(str): The user id
+        Returns:
+            boolean: True if user exists, false if user doesn't exist
+        Raises:
+            HTTPException with 500 status
+        """
+        url = f"{self.base_url}/users/{user_id}"
+        response = requests.get(url, timeout=self.timeout)
+
+        if response.status_code == 200:
+            return True
+
+        if response.status_code == 404:
+            return False
+
+        raise HTTPException(status_code=500,detail="Internal server error")
+```
+Modificaremos el model settings para incluir el base url que inyectaremos:
+```python
+class Settings(BaseSettings):
+    mongodb_uri: str
+    mongodb_db: str
+    s3_endpoint_url: str
+    s3_access_key: str
+    s3_secret_key: str
+    s3_bucket: str
+    oauth2_authorization_url: str = "https://auth-server.example.com/auth/realms/myrealm/protocol/openid-connect/token"
+    jwt_secret: str = "example"
+    users_base_url: str
+
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "forbid",
+        "case_sensitive": False,
+    }
+
+
+settings = Settings()  # type: ignore[call-arg]
+```
+El archivo unittest.env para inyectar una url base:
+```
+USERS_BASE_URL=http://example.com
+```
+Con estos cambios, podemos comprobar ejecutando los tests que la configuración que hemos realizado es correcta
+
+Ahora el siguiente paso será desarrollar los steps que necesitamos para acceder a la API, y, dado que no podremos acceder de forma
+real, lo que haremos es mockear el resultado
+
+Lo primero será, en el conftest, mockear el repositorio, que mockearemos con pytest-mock
+
+Añadimos la dependencia en dev
+```
+    "pytest-mock==3.15.1",
+```
+Y creamos el fixture para mockear la API:
+```python
+@pytest.fixture(scope="function")
+def mock_users_rest_repository(mocker):
+    return mocker.Mock(spec=UsersRestRepository)
+```
+También tendremos que modificar el fixture del client para probar la API para incluir el mock y hacer override de la dependencia del repository:
+```python
+@pytest.fixture(scope="function")
+def client(mock_users_rest_repository):
+    """
+    Prepares a TestClient for testing fastAPI endpoints
+    Returns:
+        TestClient: A FastAPI API Rest Test client
+    """
+    app.dependency_overrides[create_users_repository] = lambda: mock_users_rest_repository
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+```
+A continuación creamos los steps
+```python
+@given(parsers.parse("{user_id} is an enrolled user"))
+def user_is_enrolled(mock_users_rest_repository,user_id: str):
+    mock_users_rest_repository.exists.return_value = True
+
+@given(parsers.parse("{user_id} is not an enrolled user"))
+def user_is_not_enrolled(mock_users_rest_repository,user_id: str):
+    mock_users_rest_repository.exists.return_value = False
+```
+En este punto aún no hemos creado la lógica, pero el siguiente paso sería adaptar los escenarios existentes a la nueva funcionalidad:
+```gherkin
+  Scenario: A valid user can create a document
+    Given API is running
+    And a valid JWT token for user John
+    And John is an enrolled user
+    When I create a document
+    Then response is 201
+
+  Scenario: A valid user retrieves an empty list when there are no documents
+    Given API is running
+    And a valid JWT token for user John
+    And John is an enrolled user
+    When I get all documents
+    Then response is an empty list
+
+  Scenario: A valid user can get their documents
+    Given API is running
+    And a valid JWT token for user John
+    And John is an enrolled user
+    And documents owned by:
+        | John | 5 |
+        | Alice | 10 |
+        | Bob   | 3  |
+    When I get all documents
+    Then response is 200
+    And response contains only my documents
+
+  Scenario: A valid user retrieves an empty list where he doesn't own documents
+    Given API is running
+    And a valid JWT token for user John
+    And John is an enrolled user
+    And documents owned by:
+        | Alice | 1 |
+        | Bob   | 1 |
+    When I get all documents
+    Then response is 200
+    And response is an empty list
+```
+En este punto, deberíamos de poder ejecutar los tests sin errores
+
+Y ahora, siguiendo con la filosofía del TDD, crearemos el escenario que impide que un usuario no enrolado cree un documento:
+```gherkin
+  Scenario: A non enrolled valid user can't create a document
+    Given API is running
+    And a valid JWT token for user John
+    And John is not an enrolled user
+    When I create a document
+    Then response is 403
+```
+Si ejecutamos los tests, este último va a fallar, ya que no codificamos la lógica. Procedemos a ello. 
+```python
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")  # tokenUrl solo se usa si hay login
+users_rest_repository = UsersRestRepository(base_url=settings.users_base_url)
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        if not users_rest_repository.exists(user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+        return user_id
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+```
+## Conclusiones
+
+Hemos incluido una nueva funcionalidad que no podíamos reproducir con infraestructura local y hemos podido probar la lógica de negocio
+
+Pero... no hemos podido probar el código que realmente invoca a la API 
+
+Esto nos lleva a unas reflexiones sobre TDD, BDD y cobertura de código: 
+
+- Calidad de los tests es más importante que la cobertura
+- Tests basados en comportamientos
+- Probar comportamiento
