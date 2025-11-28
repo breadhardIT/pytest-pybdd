@@ -94,11 +94,12 @@ async def get_document(
     Returns:
         document (Document): The created document with a presigned url for downloading the file
     """
-    LOG.debug(f"Get document {document_id}")
+    LOG.info(f"Get document {document_id}")
     doc = await mongo_repo.get_document(document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     doc.file_path = s3_repo.generate_presigned_url_for_get(doc.key)
+    LOG.info(f"The document is {doc}")
     return doc
 
 
@@ -115,9 +116,11 @@ async def delete_document(
         mongo_repo(DocumentMongoRepository): The documents repository
         s3_repo(S3Repository): The S3 Bucket repository
     """
-    LOG.debug(f"Delete document {document_id}")
+    LOG.info(f"Delete document {document_id}")
     doc: Document = await mongo_repo.get_document(document_id)
+    LOG.info(f"Document in db: {doc}")
     if not doc:
+        LOG.info("Document don't exist")
         raise HTTPException(status_code=404, detail="Document not found")
     s3_repo.delete_file(doc.key)
     await mongo_repo.delete_document(document_id)

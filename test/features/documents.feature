@@ -29,13 +29,13 @@ Feature: As user I wan't to manage documents
   Scenario: A user can delete an existing document
     Given API is running
     And Database contains documents
-    When I delete a non existing document
+    When I delete an existing document
     Then response is 204
     And document was deleted
+    And document doesn't exist in bucket
 
   Scenario: A user get not found when delete a non existing document
     Given API is running
     And Database contains documents
     When I delete a non existing document
     Then response is 404
-    And document doesn't exist in bucket
