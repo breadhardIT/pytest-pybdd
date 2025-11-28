@@ -188,31 +188,55 @@ El siguiente paso, será modificar nuestra batería de pruebas para que haya doc
 
 Para ello, vamos a definir un step parametrizable que recible una tabla de gherkin.
 Además, como tendremos que realizar pruebas en cada uno de los endpoints en función de si tenemos autenticación y de si esta es válida,
-vamos a crear un helper para crear los headers, de esta forma no repetiremos código. Este helper podemos añadirlo en el conftest o en un archivo de helpers.
+vamos a crear un helper para crear los headers, y los steps de given que nos pemritirán generar token válidos e inválidos, de esta forma no repetiremos código. Este helper podemos añadirlo en el conftest o en un archivo de helpers.
 ```python
-def get_auth_headers(context):
-    if "token" in context:
-        return {"Authorization": f'Bearer {context["token"]}'}
-    return None
+def create_test_token(user_id: str = "test-user") -> str:
+    payload = {
+        "sub": user_id,
+        "exp": datetime.now() + timedelta(hours=1)
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+
+
+@given(parsers.parse("a valid JWT token for user {user_id}"))
+def jwt_token_for_user(context, user_id: str):
+    """
+    Generates a valid token for specific username.
+    """
+    context["token"] = create_test_token(user_id=user_id)
+    context["user_id"] = user_id
+
+
+@given(parsers.parse("an invalid JWT token for user {user_id}"))
+def jwt_invalid_token_for_user(context, user_id: str):
+    """
+    Generates an invalid token for specific username.
+    """
+    context["token"] = uuid.uuid4()
+    context["user_id"] = user_id
 ```
 Definimos el step que recibe la tabla:
 ```python
-@given("Database contains documents")
-def there_are_documents_in_database(client, context):
-    LOG.debug("Loading documents")
-    documents: list[Document] = []
-    for _ in range(10):
-        response = client.post(
-            "/documents",
-            data=create_document_request_factory().model_dump(),
-            files={"file": ("file_name.txt", b"Document content", "text/plain")},
-            headers=get_auth_headers(context=context)
-        )
+@given("documents owned by:")
+def documents_owned_by(datatable, client, context):
+
+    if not "documents" in context:
+      context["documents"] = []
+
+    for row in datatable:
+        user_id = row[0]
+        documents = int(row[1])
+        for _ in range(documents):
+            token = create_test_token(user_id=user_id)
+            response = client.post(
+                "/documents",
+                data=create_document_request().model_dump(),
+                files={"file": ("file_name.txt", b"Document content", "text/plain")},
+                headers={"Authorization": f"Bearer {token}"}
+            )
+
         assert response.status_code == 201
-        assert response.json()
-        documents.append(Document.model_validate(response.json()))
-        LOG.debug(f"Document {response.json()} loaded")
-    context["documents"] = documents
+        context["documents"].append(Document.model_validate(response.json()))
 ```
 Y a continuación, también deberemos modificar todos los steps que invocan a la API para incluir los headers mediante el helper (a excepción del swagger):
 - Ejemplo:
@@ -247,7 +271,7 @@ Para seguir avanzando mediante el TDD, vamos a codificar a partir del caso de us
 
 - **Como usuario quiero crear un documento**
 ```gherkin
-Feature: Document Management
+Feature: As user I wan't to manage documents
 
   Scenario: An unauthenticated user can't create a document
     Given API is running
@@ -270,7 +294,15 @@ De nuevo ejecutamos los tests, y efectivamente el resultado no va a ser el esper
 
 ## Securización de la API
 
-Vamos a configurar la API para recibir un bearer token creando un provider que nos entrega el sub del token: [oauth2_provider](../src/app/api/oauth2_provider.py)
+Vamos a configurar la API para recibir un bearer token.
+
+Lo primero será añadir la variable jwt_secret que nos permitirá codificar y decodificar el token en el settings de la aplicación:
+
+```python
+    jwt_secret: str
+```
+
+Creamos un provider que nos entrega el sub del token: [oauth2_provider](../src/app/api/oauth2_provider.py)
 
 ```python
 from fastapi import Depends, HTTPException, status
