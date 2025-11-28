@@ -73,7 +73,7 @@ class DocumentMongoRepository:
         data = document.model_dump(exclude={"id"})
         result = await self.collection.insert_one(data)
         document.id = str(result.inserted_id)
-        LOG.info(f"Document created: {document}")
+        LOG.debug(f"Document created: {document}")
         return document
 
     async def delete_document(self, doc_id: str) -> bool:
