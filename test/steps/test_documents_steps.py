@@ -61,6 +61,14 @@ def api_running(client,context):
     response = client.get("/docs")
     assert response.status_code == 200
 
+@when("I create a document")
+def post_document(client,context):
+    response = client.post(
+        "/documents",
+        data=create_document_request().model_dump(),
+        files={"file": ("file_name.txt", b"Document content", "text/plain")},
+    )
+    context["response"] = response
 
 @when("I get all documents")
 def get_documents(client, context):
@@ -74,7 +82,7 @@ def get_non_existing_document(client, context):
     context["response"] = response
 
 
-@when("I delete a existing document")
+@when("I delete an existing document")
 def get_delete_existing_document(client, context):
     response = client.delete(f'/documents/{str(context["documents"][0].id)}',headers=get_auth_headers(context=context))
     context["response"] = response

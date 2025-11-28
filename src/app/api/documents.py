@@ -30,7 +30,7 @@ def get_s3_repo() -> S3Repository:
 
 
 def document_create_form(
-        title: str = Form(...), description: str = Form(...)
+    title: str = Form(...), description: str = Form(...)
 ) -> DocumentCreate:
     return DocumentCreate(title=title, description=description)
 
