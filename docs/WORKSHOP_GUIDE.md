@@ -163,6 +163,16 @@ def jwt_invalid_token_for_user(context, user_id: str):
     context["token"] = uuid.uuid4()
     context["user_id"] = user_id
 ```
+Además, vamos a crear un helper que nos permite crear o no los headers en función de si se ha inyectado o no el token, 
+de esta forma podremos ejecutar tests con y sin autenticación, y no duplicamos código. Este puede ser creado en 
+el conftest, o en un archivo de helpers.
+
+```python
+def get_auth_headers(context):
+    if "token" in context:
+        return {"Authorization": f'Bearer {context["token"]}'}
+    return None
+```
 
 A través del context podemos inyectar el token generado en las llamadas a las API's. En este caso, comenzaremos sobre la petición POST que nos genera los datos de prueba.
 
@@ -187,34 +197,7 @@ De esta forma podemos definir los escenarios con la inyección de un usuario.
 El siguiente paso, será modificar nuestra batería de pruebas para que haya documentos generados por diferentes usuarios. 
 
 Para ello, vamos a definir un step parametrizable que recible una tabla de gherkin.
-Además, como tendremos que realizar pruebas en cada uno de los endpoints en función de si tenemos autenticación y de si esta es válida,
-vamos a crear un helper para crear los headers, y los steps de given que nos pemritirán generar token válidos e inválidos, de esta forma no repetiremos código. Este helper podemos añadirlo en el conftest o en un archivo de helpers.
-```python
-def create_test_token(user_id: str = "test-user") -> str:
-    payload = {
-        "sub": user_id,
-        "exp": datetime.now() + timedelta(hours=1)
-    }
-    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
-
-@given(parsers.parse("a valid JWT token for user {user_id}"))
-def jwt_token_for_user(context, user_id: str):
-    """
-    Generates a valid token for specific username.
-    """
-    context["token"] = create_test_token(user_id=user_id)
-    context["user_id"] = user_id
-
-
-@given(parsers.parse("an invalid JWT token for user {user_id}"))
-def jwt_invalid_token_for_user(context, user_id: str):
-    """
-    Generates an invalid token for specific username.
-    """
-    context["token"] = uuid.uuid4()
-    context["user_id"] = user_id
-```
 Definimos el step que recibe la tabla:
 ```python
 @given("documents owned by:")
