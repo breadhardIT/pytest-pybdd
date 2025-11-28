@@ -1,3 +1,5 @@
+from conftest import get_auth_headers
+
 # 1. Desarrollo del taller
 
 Introducción al TDD y breve explicación sobre Pytest y Pybdd. 
@@ -164,6 +166,16 @@ def jwt_invalid_token_for_user(context, user_id: str):
     context["user_id"] = user_id
 ```
 
+También, en el mismo conftest, vamos a definir un helper para poder realizar las peticiones http incluso cuando
+no hayamos generado bearer token (por no existir token en el context):
+```python
+
+def get_auth_headers(context):
+    if "token" in context:
+        return {"Authorization": f'Bearer {context["token"]}'}
+    return None
+```
+
 A través del context podemos inyectar el token generado en las llamadas a las API's. En este caso, comenzaremos sobre la petición POST que nos genera los datos de prueba.
 
 ```python
@@ -171,7 +183,7 @@ A través del context podemos inyectar el token generado en las llamadas a las A
             "/documents",
             data=create_document_request_factory().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
-            headers={"Authorization": f'Bearer {context["token"]}'}
+            headers={"Authorization": f'Bearer {get_auth_headers(context)}'}
         )
 ```
 De esta forma podemos definir los escenarios con la inyección de un usuario. 
