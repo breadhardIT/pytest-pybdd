@@ -12,10 +12,12 @@ from fastapi.testclient import TestClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from pytest_bdd import given, parsers
 
+from app.api.oauth2_provider import create_users_repository
 from app.config import settings
 from app.main import app
 from app.repository.document_mongo_repository import DocumentMongoRepository
 from app.repository.document_s3_repository import S3Repository
+from app.repository.users_rest_repository import UsersRestRepository
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,16 +36,20 @@ def docker_infra():
     yield
     subprocess.run(["docker", "compose", "down"], check=True)
 
+@pytest.fixture(scope="function")
+def mock_users_rest_repository(mocker):
+    return mocker.Mock(spec=UsersRestRepository)
 
-@pytest.fixture(scope="session")
-def client():
+@pytest.fixture(scope="function")
+def client(mock_users_rest_repository):
     """
     Prepares a TestClient for testing fastAPI endpoints
     Returns:
         TestClient: A FastAPI API Rest Test client
     """
-    return TestClient(app)
-
+    app.dependency_overrides[create_users_repository] = lambda: mock_users_rest_repository
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 @pytest.fixture(scope="session")
 def mongo_repo() -> DocumentMongoRepository:
@@ -91,7 +97,6 @@ def clean_db_and_s3(mongo_repo: DocumentMongoRepository, s3_repo: S3Repository):
             s3_repo.client.delete_object(Bucket=s3_repo.bucket, Key=obj["Key"])
 
 
-
 @pytest.fixture
 def context():
     return {}
@@ -125,3 +130,11 @@ def get_auth_headers(context):
     if "token" in context:
         return {"Authorization": f'Bearer {context["token"]}'}
     return None
+
+@given(parsers.parse("{user_id} is an enrolled user"))
+def user_is_enrolled(mock_users_rest_repository,user_id: str):
+    mock_users_rest_repository.exists.return_value = True
+
+@given(parsers.parse("{user_id} is not an enrolled user"))
+def user_is_not_enrolled(mock_users_rest_repository,user_id: str):
+    mock_users_rest_repository.exists.return_value = False
