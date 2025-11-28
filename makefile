@@ -1,4 +1,4 @@
-include .env
+include unittest.env
 export
 export PYTHONPATH=$(PWD)/src
 
