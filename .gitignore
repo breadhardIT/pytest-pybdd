@@ -1,6 +1,5 @@
 .venv
 .env
-*.env
 assets/
 report/
 htmlcov/
