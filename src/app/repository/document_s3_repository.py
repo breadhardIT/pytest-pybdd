@@ -3,6 +3,7 @@ import logging
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+from fastapi import HTTPException
 
 LOG = logging.getLogger(__name__)
 
@@ -67,3 +68,7 @@ class S3Repository:
         Args:
             key (str): The path and file name of the file to delete
         """
+        try:
+            self.client.delete_object(Bucket=self.bucket,Key=key)
+        except ClientError:
+            raise HTTPException(status_code=500)
