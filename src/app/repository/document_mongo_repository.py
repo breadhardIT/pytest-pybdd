@@ -80,6 +80,7 @@ class DocumentMongoRepository:
         LOG.debug(f"Inserting document: {document}")
         result = await self.collection.insert_one(data)
         document.id = str(result.inserted_id)
+        LOG.debug(f"Document created: {document}")
         return document
 
     async def delete_document(self, doc_id: str, current_user: str) -> bool:
@@ -90,5 +91,5 @@ class DocumentMongoRepository:
         Returns:
             result (bool): True if deleted, false if not found
         """
-        result = await self.collection.delete_one({"_id": doc_id})
+        result = await self.collection.delete_one({"_id": ObjectId(doc_id)})
         return result.deleted_count > 0

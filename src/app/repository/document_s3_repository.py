@@ -3,6 +3,7 @@ import logging
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+from fastapi import HTTPException
 
 LOG = logging.getLogger(__name__)
 
