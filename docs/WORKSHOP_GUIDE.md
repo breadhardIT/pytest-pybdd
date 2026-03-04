@@ -169,14 +169,14 @@ A través del context podemos inyectar el token generado en las llamadas a las A
 ```python
  response = client.post(
             "/documents",
-            data=create_document_request_factory().model_dump(),
+            data=create_document_request().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
             headers={"Authorization": f'Bearer {context["token"]}'}
         )
 ```
 De esta forma podemos definir los escenarios con la inyección de un usuario. 
 ```gherkin
-  Scenario: GET /documents/document with existing documents
+  Scenario: A user get the list of documents where are documents
     Given API is running
     And an invalid JWT token for user John
     And Database contains documents
@@ -197,6 +197,11 @@ def create_test_token(user_id: str = "test-user") -> str:
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
+def get_auth_headers(context):
+    try:
+        return {"Authorization": f'Bearer {context["token"]}'}
+    except:
+        return {}
 
 @given(parsers.parse("a valid JWT token for user {user_id}"))
 def jwt_token_for_user(context, user_id: str):
@@ -247,6 +252,29 @@ def get_documents(client, context):
     context["response"] = response
 ```
 
+A continuación, vamos a modificar el settings de la aplicación, para incluir la variable jwt_secret, que contendrá deberá contener el secret para interactuar con el auth server:
+
+```
+class Settings(BaseSettings):
+    mongodb_uri: str
+    mongodb_db: str
+    s3_endpoint_url: str
+    s3_access_key: str
+    s3_secret_key: str
+    s3_bucket: str
+    jwt_settings: str
+
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "forbid",
+        "case_sensitive": False,
+    }
+
+
+settings = Settings()  # type: ignore[call-arg]
+```
+
 Esto nos va a permitir definir en nuestro escenario un given en el que podremos parametrizar cuantos usuarios queremos, y cuantos documentos por usuario, haciéndolo super-flexible:
 
 Vamos a definir, para comprobar que nuestra batería de tests funciona, un escenario en el que comprovamos que sin token la API debería devolver un 401
@@ -295,12 +323,6 @@ De nuevo ejecutamos los tests, y efectivamente el resultado no va a ser el esper
 ## Securización de la API
 
 Vamos a configurar la API para recibir un bearer token.
-
-Lo primero será añadir la variable jwt_secret que nos permitirá codificar y decodificar el token en el settings de la aplicación:
-
-```python
-    jwt_secret: str
-```
 
 Creamos un provider que nos entrega el sub del token: [oauth2_provider](../src/app/api/oauth2_provider.py)
 
