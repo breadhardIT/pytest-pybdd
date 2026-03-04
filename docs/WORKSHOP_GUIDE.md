@@ -198,7 +198,10 @@ def create_test_token(user_id: str = "test-user") -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
 def get_auth_headers(context):
-    return {"Authorization": f'Bearer {context["token"]}'}
+    try:
+        return {"Authorization": f'Bearer {context["token"]}'}
+    except:
+        return {}
 
 @given(parsers.parse("a valid JWT token for user {user_id}"))
 def jwt_token_for_user(context, user_id: str):
@@ -247,6 +250,29 @@ Y a continuación, también deberemos modificar todos los steps que invocan a la
 def get_documents(client, context):
     response = client.get("/documents",headers=get_auth_headers(context=context))
     context["response"] = response
+```
+
+A continuación, vamos a modificar el settings de la aplicación, para incluir la variable jwt_secret, que contendrá deberá contener el secret para interactuar con el auth server:
+
+```
+class Settings(BaseSettings):
+    mongodb_uri: str
+    mongodb_db: str
+    s3_endpoint_url: str
+    s3_access_key: str
+    s3_secret_key: str
+    s3_bucket: str
+    jwt_settings: str
+
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "forbid",
+        "case_sensitive": False,
+    }
+
+
+settings = Settings()  # type: ignore[call-arg]
 ```
 
 Esto nos va a permitir definir en nuestro escenario un given en el que podremos parametrizar cuantos usuarios queremos, y cuantos documentos por usuario, haciéndolo super-flexible:
