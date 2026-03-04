@@ -324,12 +324,6 @@ De nuevo ejecutamos los tests, y efectivamente el resultado no va a ser el esper
 
 Vamos a configurar la API para recibir un bearer token.
 
-Lo primero será añadir la variable jwt_secret que nos permitirá codificar y decodificar el token en el settings de la aplicación:
-
-```python
-    jwt_secret: str
-```
-
 Creamos un provider que nos entrega el sub del token: [oauth2_provider](../src/app/api/oauth2_provider.py)
 
 ```python
