@@ -169,14 +169,14 @@ A través del context podemos inyectar el token generado en las llamadas a las A
 ```python
  response = client.post(
             "/documents",
-            data=create_document_request_factory().model_dump(),
+            data=create_document_request().model_dump(),
             files={"file": ("file_name.txt", b"Document content", "text/plain")},
             headers={"Authorization": f'Bearer {context["token"]}'}
         )
 ```
 De esta forma podemos definir los escenarios con la inyección de un usuario. 
 ```gherkin
-  Scenario: GET /documents/document with existing documents
+  Scenario: A user get the list of documents where are documents
     Given API is running
     And an invalid JWT token for user John
     And Database contains documents
@@ -197,6 +197,8 @@ def create_test_token(user_id: str = "test-user") -> str:
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
+def get_auth_headers(context):
+    return {"Authorization": f'Bearer {context["token"]}'}
 
 @given(parsers.parse("a valid JWT token for user {user_id}"))
 def jwt_token_for_user(context, user_id: str):
